@@ -17,6 +17,10 @@ namespace ChatServerCS
             if (userName != null)
             {
                 Clients.Others.ParticipantDisconnection(userName);
+
+                User client = new User();
+                ChatClients.TryRemove(userName, out client);
+
                 Console.WriteLine($"<> {userName} disconnected");
             }
             return base.OnDisconnected(stopCalled);

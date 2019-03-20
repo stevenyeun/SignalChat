@@ -5,6 +5,7 @@ using ChatClientCS.Enums;
 using ChatClientCS.Models;
 using System.Net;
 using Microsoft.AspNet.SignalR.Client;
+using Ini;
 
 namespace ChatClientCS.Services
 {
@@ -23,10 +24,22 @@ namespace ChatClientCS.Services
 
         private IHubProxy hubProxy;
         private HubConnection connection;
-        private string url = "http://localhost:8080/signalchat";
+
+        ConsoleIni consoleIni = new ConsoleIni("Setting");
+
+        private string url;//"http://localhost:8080/signalchat";
+
+        bool switch_flag = false;
 
         public async Task ConnectAsync()
         {
+            consoleIni.ReadIni();
+
+            if (switch_flag)
+                url = consoleIni.server2 + "/signalchat";
+            else
+                url = consoleIni.server1 + "/signalchat";
+
             connection = new HubConnection(url);
             hubProxy = connection.CreateHubProxy("ChatHub");
             hubProxy.On<User>("ParticipantLogin", (u) => ParticipantLoggedIn?.Invoke(u));
@@ -50,6 +63,8 @@ namespace ChatClientCS.Services
         private void Disconnected()
         {
             ConnectionClosed?.Invoke();
+
+            switch_flag = !switch_flag;
         }
 
         private void Reconnected()

@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Diagnostics;
 using System.Reactive.Linq;
+using Ini;
 
 namespace ChatClientCS.ViewModels
 {
@@ -23,11 +24,20 @@ namespace ChatClientCS.ViewModels
         private TaskFactory ctxTaskFactory;
         private const int MAX_IMAGE_WIDTH = 150;
         private const int MAX_IMAGE_HEIGHT = 150;
+        private const int MAX_FILE_SIZE = 1048576; //1 MB = 1048576 Byte
+        ConsoleIni consoleIni = new ConsoleIni("Setting");
 
         private string _userName;
         public string UserName
         {
-            get { return _userName; }
+            get
+            {
+                consoleIni.ReadIni();
+
+                _userName = consoleIni.id;
+
+                return _userName;
+            }
             set
             {
                 _userName = value;
@@ -134,13 +144,43 @@ namespace ChatClientCS.ViewModels
             catch (Exception) { return false; }
         }
         #endregion
-
+        bool OnlyOneThread = false;
+        bool myCanLogin = false;
         #region Login Command
         private ICommand _loginCommand;
         public ICommand LoginCommand
         {
             get
             {
+                if (OnlyOneThread == false)
+                {
+                    OnlyOneThread = true;
+                    Task.Run(async () =>
+                    {
+                        while (true)
+                        {
+                            // do the work in the loop
+                            string newData = DateTime.Now.ToLongTimeString();
+
+                            // update the UI on the UI thread
+                            //Dispatcher.Invoke(() => txtTicks.Text = "TASK - " + newData);
+
+                            // don't run again for at least 200 milliseconds
+                            await Task.Delay(200);
+                            CanLogin();
+
+                            if (IsLoggedIn) break;
+
+                            if (myCanLogin)
+                            {
+                                Console.WriteLine("CanLogin {0} ", this.myCanLogin);
+                                await Login();
+                                break;
+                            }
+                        }
+                    });
+                }
+
                 return _loginCommand ?? (_loginCommand =
                     new RelayCommandAsync(() => Login(), (o) => CanLogin()));
             }
@@ -150,10 +190,12 @@ namespace ChatClientCS.ViewModels
         {
             try
             {
+                Console.WriteLine($"+ login##########################");
                 List<User> users = new List<User>();
                 users = await chatService.LoginAsync(_userName, Avatar());
                 if (users != null)
                 {
+                    Console.WriteLine($"+ if##########################");
                     users.ForEach(u => Participants.Add(new Participant { Name = u.Name, Photo = u.Photo }));
                     UserMode = UserModes.Chat;
                     IsLoggedIn = true;
@@ -161,7 +203,8 @@ namespace ChatClientCS.ViewModels
                 }
                 else
                 {
-                    dialogService.ShowNotification("Username is already in use");
+                    Console.WriteLine($"+ else##########################");
+                    dialogService.ShowNotification("잠시 후 다시 시도바랍니다.");
                     return false;
                 }
 
@@ -171,6 +214,14 @@ namespace ChatClientCS.ViewModels
 
         private bool CanLogin()
         {
+
+            Console.WriteLine("Called CanLogin");
+            ////true를 리턴하면 로그인버튼 활성화
+            if (UserName != null)
+            {
+                this.myCanLogin = !string.IsNullOrEmpty(UserName) && UserName.Length >= 2 && IsConnected;
+            }
+
             return !string.IsNullOrEmpty(UserName) && UserName.Length >= 2 && IsConnected;
         }
         #endregion
@@ -288,6 +339,14 @@ namespace ChatClientCS.ViewModels
             if (string.IsNullOrEmpty(pic)) return false;
 
             var img = await Task.Run(() => File.ReadAllBytes(pic));
+
+            int fileSize = img.Length;
+
+            if (fileSize > MAX_FILE_SIZE)
+            {
+                dialogService.ShowNotification("파일크기 1MB이하만 전송 가능합니다.");
+                return false;
+            }
 
             try
             {
@@ -409,6 +468,8 @@ namespace ChatClientCS.ViewModels
                     Photo = u.Photo
                 })).Wait();
             }
+           else
+                ptp.IsLoggedIn = true;
         }
 
         private void ParticipantDisconnection(string name)
@@ -444,7 +505,8 @@ namespace ChatClientCS.ViewModels
                 if (!t.IsFaulted)
                 {
                     IsConnected = true;
-                    chatService.LoginAsync(_userName, Avatar()).Wait();
+                    Login();
+                    //chatService.LoginAsync(_userName, Avatar()).Wait();
                     IsLoggedIn = true;
                 }
             });

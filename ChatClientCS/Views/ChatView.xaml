@@ -321,6 +321,9 @@
                                  TextWrapping="Wrap" AcceptsReturn="True" CaretBrush="#7F000000"
                                  VerticalScrollBarVisibility="Auto"
                                  Text="{Binding TextMessage, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Command="{Binding SendTextMessageCommand}" Key="Return"/>
+                            </TextBox.InputBindings>
                             <i:Interaction.Triggers>
                                 <i:EventTrigger EventName="KeyUp">
                                     <i:InvokeCommandAction Command="{Binding TypingCommand}"/>

@@ -3,6 +3,7 @@ using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
 using Owin;
+using Ini;
 
 namespace ChatServerCS
 {
@@ -10,7 +11,12 @@ namespace ChatServerCS
     {
         static void Main(string[] args)
         {
-            var url = "http://localhost:8080/";
+            ConsoleIni consoleIni = new ConsoleIni("Setting");
+
+            consoleIni.ReadIni();
+
+            var url = consoleIni.server1;// "http://127.0.0.1:8080/";//"http://localhost:8080/";
+
             using (WebApp.Start<Startup>(url))
             {
                 Console.WriteLine($"Server running at {url}");
