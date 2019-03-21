@@ -25,7 +25,7 @@ namespace ChatClientCS.ViewModels
         private const int MAX_IMAGE_WIDTH = 150;
         private const int MAX_IMAGE_HEIGHT = 150;
         private const int MAX_FILE_SIZE = 1048576; //1 MB = 1048576 Byte
-        ConsoleIni consoleIni = new ConsoleIni("Setting");
+        ConsoleIni consoleIni = new ConsoleIni("Setting_Client");
 
         private string _userName;
         public string UserName
@@ -190,12 +190,10 @@ namespace ChatClientCS.ViewModels
         {
             try
             {
-                Console.WriteLine($"+ login##########################");
                 List<User> users = new List<User>();
                 users = await chatService.LoginAsync(_userName, Avatar());
                 if (users != null)
                 {
-                    Console.WriteLine($"+ if##########################");
                     users.ForEach(u => Participants.Add(new Participant { Name = u.Name, Photo = u.Photo }));
                     UserMode = UserModes.Chat;
                     IsLoggedIn = true;
@@ -203,7 +201,6 @@ namespace ChatClientCS.ViewModels
                 }
                 else
                 {
-                    Console.WriteLine($"+ else##########################");
                     dialogService.ShowNotification("잠시 후 다시 시도바랍니다.");
                     return false;
                 }
@@ -216,7 +213,7 @@ namespace ChatClientCS.ViewModels
         {
 
             Console.WriteLine("Called CanLogin");
-            ////true를 리턴하면 로그인버튼 활성화
+            //true를 리턴하면 로그인버튼 활성화
             if (UserName != null)
             {
                 this.myCanLogin = !string.IsNullOrEmpty(UserName) && UserName.Length >= 2 && IsConnected;
@@ -505,9 +502,10 @@ namespace ChatClientCS.ViewModels
                 if (!t.IsFaulted)
                 {
                     IsConnected = true;
+                    IsLoggedIn = true;
                     Login();
                     //chatService.LoginAsync(_userName, Avatar()).Wait();
-                    IsLoggedIn = true;
+                    
                 }
             });
         }

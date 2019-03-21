@@ -25,7 +25,7 @@ namespace ChatClientCS.Services
         private IHubProxy hubProxy;
         private HubConnection connection;
 
-        ConsoleIni consoleIni = new ConsoleIni("Setting");
+        ConsoleIni consoleIni = new ConsoleIni("Setting_Client");
 
         private string url;//"http://localhost:8080/signalchat";
 

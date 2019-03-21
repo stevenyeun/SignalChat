@@ -90,11 +90,11 @@ namespace Ini
             // See if this file exists in the same directory.
             if (File.Exists(filePath) == true)//파일이 존재
             {
-                Console.WriteLine(filePath + " 파일이 존재합니다(MainProgramIni)");
+               // Console.WriteLine(filePath + " 파일이 존재합니다(MainProgramIni)");
             }
             else
             {
-                Console.WriteLine(filePath + " 파일을 찾을수없습니다(MainProgramIni)");
+               // Console.WriteLine(filePath + " 파일을 찾을수없습니다(MainProgramIni)");
             }
         }
         public void WriteIni()

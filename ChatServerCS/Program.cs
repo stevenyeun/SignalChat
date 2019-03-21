@@ -11,7 +11,7 @@ namespace ChatServerCS
     {
         static void Main(string[] args)
         {
-            ConsoleIni consoleIni = new ConsoleIni("Setting");
+            ConsoleIni consoleIni = new ConsoleIni("Setting_Server");
 
             consoleIni.ReadIni();
 
