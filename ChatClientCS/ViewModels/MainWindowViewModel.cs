@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Diagnostics;
 using System.Reactive.Linq;
 using Ini;
+using System.Windows;
 
 namespace ChatClientCS.ViewModels
 {
@@ -319,6 +320,46 @@ namespace ChatClientCS.ViewModels
         }
         #endregion
 
+        #region Send Alert Command
+        private ICommand _sendAlertCommand;
+        public ICommand SendAlertCommand
+        {
+            get
+            {
+                return _sendAlertCommand ?? (_sendAlertCommand =
+                    new RelayCommandAsync(() => SendAlert(), (o) => CanSendAlert()));
+            }
+        }
+
+        private async Task<bool> SendAlert()
+        {
+            try
+            {
+                var recepient = _selectedParticipant.Name;
+                await chatService.SendUnicastMessageAsync(recepient, "!!!!!!!!!!!!!경고발생!!!!!!!!!!!!!", true);
+                return true;
+            }
+            catch (Exception) { return false; }
+            finally
+            {
+                ChatMessage msg = new ChatMessage
+                {
+                    Author = UserName,
+                    Message = "!!!!!!!!!!!!!경고발생!!!!!!!!!!!!!",
+                    Time = DateTime.Now,
+                    IsOriginNative = true
+                };
+                SelectedParticipant.Chatter.Add(msg);
+                TextMessage = string.Empty;
+            }
+        }
+
+        private bool CanSendAlert()
+        {
+            return (IsConnected && _selectedParticipant != null && _selectedParticipant.IsLoggedIn);
+        }
+        #endregion
+
         #region Send Picture Message Command
         private ICommand _sendImageMessageCommand;
         public ICommand SendImageMessageCommand
@@ -416,6 +457,38 @@ namespace ChatClientCS.ViewModels
         {
             if (mt == MessageType.Unicast)
             {
+                ChatMessage cm = new ChatMessage { Author = name, Message = msg, Time = DateTime.Now };
+                var sender = _participants.Where((u) => string.Equals(u.Name, name)).FirstOrDefault();
+                ctxTaskFactory.StartNew(() => sender.Chatter.Add(cm)).Wait();
+
+                if (!(SelectedParticipant != null && sender.Name.Equals(SelectedParticipant.Name)))
+                {
+                    ctxTaskFactory.StartNew(() => sender.HasSentNewMessage = true).Wait();
+                }
+            }
+        }
+
+        private void NewAlertMessage(string name, string msg, bool alert_flag, MessageType mt)
+        {
+            MediaPlayer Mysound = new MediaPlayer();
+
+            //var uri = new Uri("pack://application:,,,/alert.mp3");
+
+            //using (FileStream soundFile = File.Create("test.mp3"))
+            //{
+            //    Application.GetResourceStream(uri).Stream.CopyTo(soundFile);
+            //}
+
+            if (mt == MessageType.Unicast)
+            {
+                if (alert_flag == true)
+                {
+                    Mysound.Open(new Uri("./alert.mp3", UriKind.Relative));
+                    Mysound.Volume = 10;
+                    Mysound.Play();
+                    //Console.Beep();
+                }
+
                 ChatMessage cm = new ChatMessage { Author = name, Message = msg, Time = DateTime.Now };
                 var sender = _participants.Where((u) => string.Equals(u.Name, name)).FirstOrDefault();
                 ctxTaskFactory.StartNew(() => sender.Chatter.Add(cm)).Wait();
@@ -535,6 +608,7 @@ namespace ChatClientCS.ViewModels
 
             chatSvc.NewTextMessage += NewTextMessage;
             chatSvc.NewImageMessage += NewImageMessage;
+            chatSvc.NewAlertMessage += NewAlertMessage;
             chatSvc.ParticipantLoggedIn += ParticipantLogin;
             chatSvc.ParticipantLoggedOut += ParticipantDisconnection;
             chatSvc.ParticipantDisconnected += ParticipantDisconnection;

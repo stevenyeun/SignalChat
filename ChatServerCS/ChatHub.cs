@@ -107,6 +107,18 @@ namespace ChatServerCS
             }
         }
 
+        public void UnicastAlertMessage(string recepient, string message, bool alert_flag)
+        {
+            var sender = Clients.CallerState.UserName;
+            if (!string.IsNullOrEmpty(sender) && recepient != sender &&
+                !string.IsNullOrEmpty(message) && ChatClients.ContainsKey(recepient))
+            {
+                User client = new User();
+                ChatClients.TryGetValue(recepient, out client);
+                Clients.Client(client.ID).UnicastAlertMessage(sender, message, alert_flag);
+            }
+        }
+
         public void Typing(string recepient)
         {
             if (string.IsNullOrEmpty(recepient)) return;

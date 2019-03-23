@@ -13,6 +13,7 @@ namespace ChatClientCS.Services
     {
         public event Action<string, string, MessageType> NewTextMessage;
         public event Action<string, byte[], MessageType> NewImageMessage;
+        public event Action<string, string, bool, MessageType> NewAlertMessage;
         public event Action<string> ParticipantDisconnected;
         public event Action<User> ParticipantLoggedIn;
         public event Action<string> ParticipantLoggedOut;
@@ -50,6 +51,7 @@ namespace ChatClientCS.Services
             hubProxy.On<string, byte[]>("BroadcastPictureMessage", (n, m) => NewImageMessage?.Invoke(n, m, MessageType.Broadcast));
             hubProxy.On<string, string>("UnicastTextMessage", (n, m) => NewTextMessage?.Invoke(n, m, MessageType.Unicast));
             hubProxy.On<string, byte[]>("UnicastPictureMessage", (n, m) => NewImageMessage?.Invoke(n, m, MessageType.Unicast));
+            hubProxy.On<string, string, bool>("UnicastAlertMessage", (n, m, k) => NewAlertMessage?.Invoke(n, m, k, MessageType.Unicast));
             hubProxy.On<string>("ParticipantTyping", (p) => ParticipantTyping?.Invoke(p));
 
             connection.Reconnecting += Reconnecting;
@@ -105,6 +107,11 @@ namespace ChatClientCS.Services
         public async Task SendUnicastMessageAsync(string recepient, byte[] img)
         {
             await hubProxy.Invoke("UnicastImageMessage", new object[] { recepient, img });
+        }
+
+        public async Task SendUnicastMessageAsync(string recepient, string msg, bool alert_flag)
+        {
+            await hubProxy.Invoke("UnicastAlertMessage", new object[] { recepient, msg, alert_flag });
         }
 
         public async Task TypingAsync(string recepient)
