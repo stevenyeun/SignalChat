@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Reactive.Linq;
 using Ini;
 using System.Windows;
+using QlightLibrary;
 
 namespace ChatClientCS.ViewModels
 {
@@ -497,6 +498,15 @@ namespace ChatClientCS.ViewModels
                 {
                     ctxTaskFactory.StartNew(() => sender.HasSentNewMessage = true).Wait();
                 }
+
+                //n초후에 램프 정지
+                LampController.LampOn();
+                Observable.Timer(TimeSpan.FromMilliseconds(5000)).Subscribe(
+                    t => LampController.LampOff()
+                    );
+                
+
+
             }
         }
 
