@@ -256,8 +256,30 @@
                         </Image>
                     </Grid>
                     <TextBlock x:Name="MessageTxtBlock" Grid.Row="1" Margin="7,5,7,0" TextWrapping="Wrap" 
-                               VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
-                               Text="{Binding Message}"/>
+                               VerticalAlignment="Stretch" HorizontalAlignment="Stretch"                              
+                               Text="{Binding Message}">
+                             <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseLeftButtonUp">
+                                    <i:InvokeCommandAction
+                                        Command="{Binding DataContext.OpenVideoCommand, 
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                                <i:EventTrigger EventName="MouseEnter">
+                                    <i:InvokeCommandAction
+                                        Command="{Binding DataContext.MouseEnterCommand, 
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                                <i:EventTrigger EventName="MouseLeave">
+                                    <i:InvokeCommandAction
+                                        Command="{Binding DataContext.MouseLeaveCommand, 
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                    </TextBlock>
+
                     <TextBlock Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Stretch"
                                Margin="0,0,5,0" FontSize="10" Opacity="0.8"
                                Text="{Binding Time, StringFormat={}{0:t}}"/>

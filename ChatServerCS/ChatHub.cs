@@ -119,6 +119,18 @@ namespace ChatServerCS
             }
         }
 
+        public void UnicastVideoMessage(string recepient, byte[] video, int videoType)
+        {
+            var sender = Clients.CallerState.UserName;
+            if (!string.IsNullOrEmpty(sender) && recepient != sender &&
+                video != null && ChatClients.ContainsKey(recepient))
+            { 
+                User client = new User();
+                ChatClients.TryGetValue(recepient, out client);
+                Clients.Client(client.ID).UnicastVideoMessage(sender, video, videoType);                
+            }
+        }
+
         public void Typing(string recepient)
         {
             if (string.IsNullOrEmpty(recepient)) return;

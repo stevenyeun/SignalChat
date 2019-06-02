@@ -368,18 +368,19 @@ namespace ChatClientCS.ViewModels
             get
             {
                 return _sendImageMessageCommand ?? (_sendImageMessageCommand =
-                    new RelayCommandAsync(() => SendImageMessage(), (o) => CanSendImageMessage()));
+                    new RelayCommandAsync(() => SendImageOrVideoMessage(), (o) => CanSendImageMessage()));
             }
         }
 
-        private async Task<bool> SendImageMessage()
+        private async Task<bool> SendImageOrVideoMessage()
         {
-            var pic = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png");
-            if (string.IsNullOrEmpty(pic)) return false;
+            //var pic = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png");
+            var filePathName = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png |Videos (*.avi;*.mp4)|*.avi;*.mp4");
+            if (string.IsNullOrEmpty(filePathName)) return false;
 
-            var img = await Task.Run(() => File.ReadAllBytes(pic));
+            var content = await Task.Run(() => File.ReadAllBytes(filePathName));
 
-            int fileSize = img.Length;
+            int fileSize = content.Length;
 
             if (fileSize > MAX_FILE_SIZE)
             {
@@ -387,17 +388,52 @@ namespace ChatClientCS.ViewModels
                 return false;
             }
 
+            bool isImage = false;
             try
             {
                 var recepient = _selectedParticipant.Name;
-                await chatService.SendUnicastMessageAsync(recepient, img);
+
+                string extension = Path.GetExtension(filePathName).Substring(1).ToLower();
+                if (extension == "jpg")
+                {
+                    isImage = true;
+                    await chatService.SendUnicastMessageAsync(recepient, content); 
+                }
+                else//동영상
+                {
+                    isImage = false;
+                    VideoType videoType = VideoType.AVI;
+                    switch (extension)
+                    {
+                        case "avi":
+                            videoType = VideoType.AVI;
+                            break;
+                        case "mp4":
+                            videoType = VideoType.MP4;
+                            break;
+                    }
+
+                    await chatService.SendUnicastMessageAsync(recepient, content, (int)videoType);
+                }                
                 return true;
             }
-            catch (Exception) { return false; }
+            catch (Exception e)
+            {
+                return false;
+            }
             finally
             {
-                ChatMessage msg = new ChatMessage { Author = UserName, Picture = pic, Time = DateTime.Now, IsOriginNative = true };
-                SelectedParticipant.Chatter.Add(msg);
+                if(isImage)
+                {
+                    ChatMessage msg = new ChatMessage { Author = UserName, Picture = filePathName, Time = DateTime.Now, IsOriginNative = true };
+                    SelectedParticipant.Chatter.Add(msg);
+                }
+                else
+                {
+                    ChatMessage msg = new ChatMessage { Author = UserName, Message = "전송한동영상:" + filePathName, Video = filePathName, Time = DateTime.Now, IsOriginNative = true };
+                    SelectedParticipant.Chatter.Add(msg);
+                }
+                
             }           
         }
 
@@ -450,6 +486,61 @@ namespace ChatClientCS.ViewModels
             var img = msg.Picture;
             if (string.IsNullOrEmpty(img) || !File.Exists(img)) return;
             Process.Start(img);
+        }
+        #endregion
+
+        #region Open Video Command
+        private ICommand _openVideoCommand;
+        public ICommand OpenVideoCommand
+        {
+            get
+            {
+                return _openVideoCommand ?? (_openVideoCommand =
+                    new RelayCommand<ChatMessage>((m) => OpenVideo(m)));
+            }
+        }
+
+        private void OpenVideo(ChatMessage msg)
+        {
+            var img = msg.Video;
+            if (string.IsNullOrEmpty(img) || !File.Exists(img)) return;
+            Process.Start(img);
+        }
+        #endregion
+
+        #region Change Cursor Command
+        private ICommand _mouseEnterCommand;
+        public ICommand MouseEnterCommand
+        {
+            get
+            {
+                return _mouseEnterCommand ?? (_mouseEnterCommand =
+                    new RelayCommand<ChatMessage>((m) => ChangeCursor(m, true)));
+            }
+        }
+        private ICommand _mouseLeaveCommand;
+        public ICommand MouseLeaveCommand
+        {
+            get
+            {
+                return _mouseLeaveCommand ?? (_mouseLeaveCommand =
+                    new RelayCommand<ChatMessage>((m) => ChangeCursor(m, false)));
+            }
+        }
+        private void ChangeCursor(ChatMessage msg, bool mouseEnter)
+        {
+            if(!mouseEnter)//MouseLeave
+                Mouse.OverrideCursor = null;
+            else//MouseEnter
+            {
+                var img = msg.Video;
+                if (string.IsNullOrEmpty(img) || !File.Exists(img))
+                {
+                    Mouse.OverrideCursor = null;
+                    return;
+                }
+                Mouse.OverrideCursor = Cursors.Hand;
+            }
         }
         #endregion
 
@@ -537,6 +628,39 @@ namespace ChatClientCS.ViewModels
             }
         }
 
+        private void NewVideoMessage(string name, byte[] video, int videoType, MessageType mt)//동영상수신
+        {
+            if (mt == MessageType.Unicast)
+            {
+                var videosDirectory = Path.Combine(Environment.CurrentDirectory, "Video Messages");
+                if (!Directory.Exists(videosDirectory)) Directory.CreateDirectory(videosDirectory);
+
+                var videosCount = Directory.EnumerateFiles(videosDirectory).Count() + 1;
+
+                string extension = Enum.GetName(typeof(VideoType), videoType).ToLower();
+                var imgPath = Path.Combine(videosDirectory, $"VIDEO_{videosCount}."+ extension);
+
+                try
+                {
+                    File.WriteAllBytes(imgPath, video);
+                }
+                catch (Exception e)
+                {
+                    // Exception ...
+                }
+
+                ChatMessage cm = new ChatMessage { Author = name, Message = "수신된동영상:"+imgPath, Video = imgPath, Time = DateTime.Now };
+                var sender = _participants.Where(u => string.Equals(u.Name, name)).FirstOrDefault();
+                ctxTaskFactory.StartNew(() => sender.Chatter.Add(cm)).Wait();
+
+                if (!(SelectedParticipant != null && sender.Name.Equals(SelectedParticipant.Name)))
+                {
+                    ctxTaskFactory.StartNew(() => sender.HasSentNewMessage = true).Wait();
+                }
+
+            }
+        }
+
         private void ParticipantLogin(User u)
         {
             var ptp = Participants.FirstOrDefault(p => string.Equals(p.Name, u.Name));
@@ -548,8 +672,17 @@ namespace ChatClientCS.ViewModels
                     Photo = u.Photo
                 })).Wait();
             }
-           else
-                ptp.IsLoggedIn = true;
+            else
+            {
+                try
+                {
+                    ptp.IsLoggedIn = true;
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
         }
 
         private void ParticipantDisconnection(string name)
@@ -602,7 +735,7 @@ namespace ChatClientCS.ViewModels
                 Observable.Timer(TimeSpan.FromMilliseconds(1500)).Subscribe(t => person.IsTyping = false);
             }
         }
-        #endregion
+#endregion
 
         private byte[] Avatar()
         {
@@ -618,6 +751,7 @@ namespace ChatClientCS.ViewModels
 
             chatSvc.NewTextMessage += NewTextMessage;
             chatSvc.NewImageMessage += NewImageMessage;
+            chatSvc.NewVideoMessage += NewVideoMessage;
             chatSvc.NewAlertMessage += NewAlertMessage;
             chatSvc.ParticipantLoggedIn += ParticipantLogin;
             chatSvc.ParticipantLoggedOut += ParticipantDisconnection;

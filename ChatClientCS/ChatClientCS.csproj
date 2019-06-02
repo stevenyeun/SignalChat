@@ -144,6 +144,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Enums\VideoType.cs" />
     <Compile Include="Ini\Ini.cs" />
     <Compile Include="QlightLib\LampController.cs" />
     <Compile Include="Services\ChatService.cs" />

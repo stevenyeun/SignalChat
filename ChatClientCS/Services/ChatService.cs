@@ -13,6 +13,7 @@ namespace ChatClientCS.Services
     {
         public event Action<string, string, MessageType> NewTextMessage;
         public event Action<string, byte[], MessageType> NewImageMessage;
+        public event Action<string, byte[], int, MessageType> NewVideoMessage;//동영상전송용
         public event Action<string, string, bool, MessageType> NewAlertMessage;
         public event Action<string> ParticipantDisconnected;
         public event Action<User> ParticipantLoggedIn;
@@ -52,6 +53,7 @@ namespace ChatClientCS.Services
             hubProxy.On<string, string>("UnicastTextMessage", (n, m) => NewTextMessage?.Invoke(n, m, MessageType.Unicast));
             hubProxy.On<string, byte[]>("UnicastPictureMessage", (n, m) => NewImageMessage?.Invoke(n, m, MessageType.Unicast));
             hubProxy.On<string, string, bool>("UnicastAlertMessage", (n, m, k) => NewAlertMessage?.Invoke(n, m, k, MessageType.Unicast));
+            hubProxy.On<string, byte[], int>("UnicastVideoMessage", (n, m, K) => NewVideoMessage?.Invoke(n, m, K, MessageType.Unicast));//동영상전송용
             hubProxy.On<string>("ParticipantTyping", (p) => ParticipantTyping?.Invoke(p));
 
             connection.Reconnecting += Reconnecting;
@@ -112,6 +114,18 @@ namespace ChatClientCS.Services
         public async Task SendUnicastMessageAsync(string recepient, string msg, bool alert_flag)
         {
             await hubProxy.Invoke("UnicastAlertMessage", new object[] { recepient, msg, alert_flag });
+        }
+
+        /// <summary>
+        /// 동영상 전송
+        /// </summary>
+        /// <param name="recepient"></param>
+        /// <param name="video"></param>
+        /// <param name="videoType"></param>
+        /// <returns></returns>
+        public async Task SendUnicastMessageAsync(string recepient, byte[] video, int videoType)
+        {
+            await hubProxy.Invoke("UnicastVideoMessage", new object[] { recepient, video, videoType });
         }
 
         public async Task TypingAsync(string recepient)
