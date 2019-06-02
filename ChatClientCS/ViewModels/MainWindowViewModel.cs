@@ -485,7 +485,14 @@ namespace ChatClientCS.ViewModels
         {
             var img = msg.Picture;
             if (string.IsNullOrEmpty(img) || !File.Exists(img)) return;
-            Process.Start(img);
+            try
+            {
+                Process.Start(img);
+            }
+            catch(Exception e)
+            {
+
+            }
         }
         #endregion
 
@@ -504,7 +511,14 @@ namespace ChatClientCS.ViewModels
         {
             var img = msg.Video;
             if (string.IsNullOrEmpty(img) || !File.Exists(img)) return;
-            Process.Start(img);
+            try
+            {
+                Process.Start(img);
+            }
+            catch (Exception e)
+            {
+
+            }
         }
         #endregion
 
