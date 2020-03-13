@@ -4,13 +4,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using Microsoft.AspNet.SignalR;
+using System.Threading;
 
 namespace ChatServerCS
 {
     public class ChatHub : Hub<IClient>
     {
         private static ConcurrentDictionary<string, User> ChatClients = new ConcurrentDictionary<string, User>();
-
+        private static HTTPClientForDB httpclienfordb = new HTTPClientForDB();
+        
         public override Task OnDisconnected(bool stopCalled)
         {
             var userName = ChatClients.SingleOrDefault((c) => c.Value.ID == Context.ConnectionId).Key;
@@ -92,6 +94,12 @@ namespace ChatServerCS
                 User client = new User();
                 ChatClients.TryGetValue(recepient, out client);
                 Clients.Client(client.ID).UnicastTextMessage(sender, message);
+
+                new Thread(() =>
+                {
+                    httpclienfordb.DB(sender, recepient, message);
+                }
+               ).Start();
             }
         }
 
@@ -104,6 +112,12 @@ namespace ChatServerCS
                 User client = new User();
                 ChatClients.TryGetValue(recepient, out client);
                 Clients.Client(client.ID).UnicastPictureMessage(sender, img);
+
+                new Thread(() =>
+                {
+                    httpclienfordb.DB(sender, recepient, "", "IMG파일");
+                }
+               ).Start();
             }
         }
 
@@ -116,6 +130,12 @@ namespace ChatServerCS
                 User client = new User();
                 ChatClients.TryGetValue(recepient, out client);
                 Clients.Client(client.ID).UnicastAlertMessage(sender, message, alert_flag);
+                
+                new Thread(() =>
+                {
+                    httpclienfordb.DB(sender, recepient, message);
+                }
+               ).Start();
             }
         }
 
@@ -124,10 +144,16 @@ namespace ChatServerCS
             var sender = Clients.CallerState.UserName;
             if (!string.IsNullOrEmpty(sender) && recepient != sender &&
                 video != null && ChatClients.ContainsKey(recepient))
-            { 
+            {
                 User client = new User();
                 ChatClients.TryGetValue(recepient, out client);
-                Clients.Client(client.ID).UnicastVideoMessage(sender, video, videoType);                
+                Clients.Client(client.ID).UnicastVideoMessage(sender, video, videoType);
+
+                new Thread(() =>
+                {
+                    httpclienfordb.DB(sender, recepient, "", "Video 파일");
+                }
+                ).Start();
             }
         }
 

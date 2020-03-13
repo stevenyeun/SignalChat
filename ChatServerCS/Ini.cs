@@ -61,6 +61,8 @@ namespace Ini
 
         public string server1 = "";
         public string server2 = "";
+        public string DBserver1 = "";
+        public string DBserver2 = "";
         public string id = "";
 
         /// <summary>
@@ -113,6 +115,8 @@ namespace Ini
 
             this.server1 = ini.IniReadValue(section, "server1");
             this.server2 = ini.IniReadValue(section, "server2");
+            this.DBserver1 = ini.IniReadValue(section, "DBserver1");
+            this.DBserver2 = ini.IniReadValue(section, "DBserver2");
             this.id = ini.IniReadValue(section, "id");
         }
 

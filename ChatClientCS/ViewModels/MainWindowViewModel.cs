@@ -375,7 +375,7 @@ namespace ChatClientCS.ViewModels
         private async Task<bool> SendImageOrVideoMessage()
         {
             //var pic = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png");
-            var filePathName = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png |Videos (*.avi;*.mp4)|*.avi;*.mp4");
+            var filePathName = dialogService.OpenFile("Select image file", "Image Files(*.jpg;*.png)|*.jpg;*.png|Video files (*.avi;*.mp4)|*.avi;*.mp4");
             if (string.IsNullOrEmpty(filePathName)) return false;
 
             var content = await Task.Run(() => File.ReadAllBytes(filePathName));

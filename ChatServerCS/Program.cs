@@ -12,7 +12,6 @@ namespace ChatServerCS
         static void Main(string[] args)
         {
             ConsoleIni consoleIni = new ConsoleIni("Setting_Server");
-
             consoleIni.ReadIni();
 
             var url = consoleIni.server1;// "http://127.0.0.1:8080/";//"http://localhost:8080/";
