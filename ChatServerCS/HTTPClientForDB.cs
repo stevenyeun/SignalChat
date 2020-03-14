@@ -37,17 +37,16 @@ namespace ChatServerCS
 
                 try
                 {
-                    Console.WriteLine(DBserver1 + " try");
                     var response = client.UploadValues(DBserver1, values);
                     var responseString = Encoding.Default.GetString(response);
                     //Console.WriteLine(responseString);
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(DBserver1 + " catch " + e.Message);
+                    Console.WriteLine("DB서버"+ DBserver1 + "가 비가용 상태입니다. " + e.Message);
+                    Console.WriteLine("DB서버" + DBserver2 + "로 전환합니다.");
                     try
                     {
-                        Console.WriteLine(DBserver1 + " catch try");
                         var response = client.UploadValues(DBserver2, values);
                         var responseString = Encoding.Default.GetString(response);
                         //Console.WriteLine(responseString);
@@ -58,7 +57,8 @@ namespace ChatServerCS
                     }
                     catch (Exception ee)
                     {
-                        Console.WriteLine(DBserver1 + " catch catch " + ee.Message);
+                        Console.WriteLine("서버" + DBserver1 + "가 비가용 상태입니다. " + e.Message);
+                        Console.WriteLine("모든 서버가 비가용 상태입니다. 메시지를 저장할 수 없습니다.");
                     }
                 }
             }
