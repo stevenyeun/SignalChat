@@ -43,8 +43,8 @@ namespace ChatServerCS
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("DB서버"+ DBserver1 + "가 비가용 상태입니다. " + e.Message);
-                    Console.WriteLine("DB서버" + DBserver2 + "로 전환합니다.");
+                    Console.WriteLine("DB서버("+ DBserver1 + ")가 비가용 상태입니다. " + e.Message);
+                    Console.WriteLine("DB서버(" + DBserver2 + ")로 전환합니다.");
                     try
                     {
                         var response = client.UploadValues(DBserver2, values);
@@ -57,7 +57,7 @@ namespace ChatServerCS
                     }
                     catch (Exception ee)
                     {
-                        Console.WriteLine("서버" + DBserver1 + "가 비가용 상태입니다. " + e.Message);
+                        Console.WriteLine("DB서버(" + DBserver2 + ")가 비가용 상태입니다. " + e.Message);
                         Console.WriteLine("모든 서버가 비가용 상태입니다. 메시지를 저장할 수 없습니다.");
                     }
                 }
