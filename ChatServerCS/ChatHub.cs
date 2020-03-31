@@ -5,14 +5,36 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using Microsoft.AspNet.SignalR;
 using System.Threading;
+using Ini;
 
 namespace ChatServerCS
 {
     public class ChatHub : Hub<IClient>
     {
+        ConsoleIni consoleIni = new ConsoleIni("Setting_Server");
+
         private static ConcurrentDictionary<string, User> ChatClients = new ConcurrentDictionary<string, User>();
-        private static HTTPClientForDB httpclienfordb = new HTTPClientForDB();
-        
+        private static HTTPClientForDB[] httpclienfordb = new HTTPClientForDB[255];
+
+        public string[] DBserver_Main = new string[255];
+        public string[] DBserver_Sub = new string[255];
+        static int num_sv;
+
+        public ChatHub()
+        {
+            consoleIni.ReadIni();
+
+            num_sv = consoleIni.num_sv;
+            DBserver_Main = consoleIni.DBserver_Main;
+            DBserver_Sub = consoleIni.DBserver_Sub;
+
+            for(int i = 0; i < num_sv; i++)
+            {
+                httpclienfordb[i] = new HTTPClientForDB(DBserver_Main[i], DBserver_Sub[i], i);
+            }
+        }
+
+
         public override Task OnDisconnected(bool stopCalled)
         {
             var userName = ChatClients.SingleOrDefault((c) => c.Value.ID == Context.ConnectionId).Key;
@@ -97,7 +119,10 @@ namespace ChatServerCS
 
                 new Thread(() =>
                 {
-                    httpclienfordb.DB(sender, recepient, message);
+                    for(int i=0; i<num_sv; i++)
+                    {
+                        httpclienfordb[i].DB(sender, recepient, message);
+                    }
                 }
                ).Start();
             }
@@ -115,7 +140,10 @@ namespace ChatServerCS
 
                 new Thread(() =>
                 {
-                    httpclienfordb.DB(sender, recepient, "", "IMG파일");
+                    for (int i = 0; i < num_sv; i++)
+                    {
+                        httpclienfordb[i].DB(sender, recepient, "", "IMG파일");
+                    }
                 }
                ).Start();
             }
@@ -133,7 +161,10 @@ namespace ChatServerCS
                 
                 new Thread(() =>
                 {
-                    httpclienfordb.DB(sender, recepient, message);
+                    for (int i = 0; i < num_sv; i++)
+                    {
+                        httpclienfordb[i].DB(sender, recepient, message);
+                    }
                 }
                ).Start();
             }
@@ -151,7 +182,10 @@ namespace ChatServerCS
 
                 new Thread(() =>
                 {
-                    httpclienfordb.DB(sender, recepient, "", "Video 파일");
+                    for (int i = 0; i < num_sv; i++)
+                    {
+                        httpclienfordb[i].DB(sender, recepient, "", "Video 파일");
+                    }
                 }
                 ).Start();
             }

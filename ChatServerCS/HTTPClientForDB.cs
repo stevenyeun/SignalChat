@@ -5,24 +5,25 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Ini;
 
 namespace ChatServerCS
 {
     public class HTTPClientForDB
     {
-        ConsoleIni consoleIni = new ConsoleIni("Setting_Server");
-
         string DBserver1;
         string DBserver2;
         string temp_server;
+        int num_sv;
+        string num;
+        string strTemp;
 
-        public HTTPClientForDB()
+        public HTTPClientForDB(string a, string b, int c)
         {
-            consoleIni.ReadIni();
+            DBserver1 = a + "/u2sns.aspx?";
+            DBserver2 = b + "/u2sns.aspx?";
 
-            DBserver1 = consoleIni.DBserver1 + "/u2sns.aspx?";
-            DBserver2 = consoleIni.DBserver2 + "/u2sns.aspx?";
+            num_sv = c;
+            num = num_sv.ToString();
         }
 
         public void DB(string sender, string receiver, string msg, string filename = "")
@@ -43,8 +44,10 @@ namespace ChatServerCS
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("DB서버("+ DBserver1 + ")가 비가용 상태입니다. " + e.Message);
-                    Console.WriteLine("DB서버(" + DBserver2 + ")로 전환합니다.");
+                    strTemp = DBserver1.Replace("/u2sns.aspx?", "");
+                    Console.WriteLine(num + "번 DB서버(" + strTemp + ")가 비가용 상태입니다. " + e.Message);
+                    strTemp = DBserver2.Replace("/u2sns.aspx?", "");
+                    Console.WriteLine(num + "번 DB서버(" + strTemp + ")로 전환합니다.");
                     try
                     {
                         var response = client.UploadValues(DBserver2, values);
@@ -57,8 +60,9 @@ namespace ChatServerCS
                     }
                     catch (Exception ee)
                     {
-                        Console.WriteLine("DB서버(" + DBserver2 + ")가 비가용 상태입니다. " + e.Message);
-                        Console.WriteLine("모든 서버가 비가용 상태입니다. 메시지를 저장할 수 없습니다.");
+                        strTemp = DBserver2.Replace("/u2sns.aspx?", "");
+                        Console.WriteLine(num + "번 DB서버(" + strTemp + ")가 비가용 상태입니다. " + e.Message);
+                        Console.WriteLine("모든"+num+"번 서버가 비가용 상태입니다. 메시지를 저장할 수 없습니다.");
                     }
                 }
             }
