@@ -16,6 +16,8 @@ using System.Reactive.Linq;
 using Ini;
 using System.Windows;
 using QlightLibrary;
+using System.Threading;
+using ChatClientCS.Log;
 
 namespace ChatClientCS.ViewModels
 {
@@ -28,14 +30,15 @@ namespace ChatClientCS.ViewModels
         private const int MAX_IMAGE_HEIGHT = 150;
         private const int MAX_FILE_SIZE = 1048576; //1 MB = 1048576 Byte
         ConsoleIni consoleIni = new ConsoleIni("Setting_Client");
+        private static HTTPClientForDB httpclienfordb = new HTTPClientForDB();
+        private static log log = new log();
+        string mode;
 
         private string _userName;
         public string UserName
         {
             get
             {
-                consoleIni.ReadIni();
-
                 _userName = consoleIni.id;
 
                 return _userName;
@@ -310,6 +313,23 @@ namespace ChatClientCS.ViewModels
                     IsOriginNative = true
                 };
                 SelectedParticipant.Chatter.Add(msg);
+
+                if(mode == "1")
+                {
+                    string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                    log.WriteFile(strFileName, strDate, UserName, _selectedParticipant.Name, msg.Message);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        httpclienfordb.DB(UserName, _selectedParticipant.Name, msg.Message);
+                    }
+                   ).Start();
+                }
+                
+
                 TextMessage = string.Empty;
             }
         }
@@ -351,6 +371,21 @@ namespace ChatClientCS.ViewModels
                     IsOriginNative = true
                 };
                 SelectedParticipant.Chatter.Add(msg);
+
+                if (mode == "1")
+                {
+                    string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                    log.WriteFile(strFileName, strDate, UserName, _selectedParticipant.Name, msg.Message);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        httpclienfordb.DB(UserName, _selectedParticipant.Name, msg.Message);
+                    }
+                    ).Start();
+                }
                 TextMessage = string.Empty;
             }
         }
@@ -375,7 +410,7 @@ namespace ChatClientCS.ViewModels
         private async Task<bool> SendImageOrVideoMessage()
         {
             //var pic = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png");
-            var filePathName = dialogService.OpenFile("Select image file", "Image Files(*.jpg;*.png)|*.jpg;*.png|Video files (*.avi;*.mp4)|*.avi;*.mp4");
+            var filePathName = dialogService.OpenFile("Select image file", "Images (*.jpg;*.png)|*.jpg;*.png |Videos (*.avi;*.mp4)|*.avi;*.mp4");
             if (string.IsNullOrEmpty(filePathName)) return false;
 
             var content = await Task.Run(() => File.ReadAllBytes(filePathName));
@@ -427,13 +462,43 @@ namespace ChatClientCS.ViewModels
                 {
                     ChatMessage msg = new ChatMessage { Author = UserName, Picture = filePathName, Time = DateTime.Now, IsOriginNative = true };
                     SelectedParticipant.Chatter.Add(msg);
+
+                    if (mode == "1")
+                    {
+                        string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                        string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                        log.WriteFile(strFileName, strDate, UserName, _selectedParticipant.Name, "전송한이미지:" + filePathName);
+                    }
+                    else
+                    {
+                        new Thread(() =>
+                        {
+                            httpclienfordb.DB(UserName, _selectedParticipant.Name, "전송한이미지:" + filePathName);
+                        }
+                        ).Start();
+                    }
                 }
                 else
                 {
                     ChatMessage msg = new ChatMessage { Author = UserName, Message = "전송한동영상:" + filePathName, Video = filePathName, Time = DateTime.Now, IsOriginNative = true };
                     SelectedParticipant.Chatter.Add(msg);
+
+                    if (mode == "1")
+                    {
+                        string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                        string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                        log.WriteFile(strFileName, strDate, UserName, _selectedParticipant.Name, msg.Message);
+                    }
+                    else
+                    {
+                        new Thread(() =>
+                        {
+                            httpclienfordb.DB(UserName, _selectedParticipant.Name, msg.Message);
+                        }
+                        ).Start();
+                    }
                 }
-                
+
             }           
         }
 
@@ -571,6 +636,21 @@ namespace ChatClientCS.ViewModels
                 {
                     ctxTaskFactory.StartNew(() => sender.HasSentNewMessage = true).Wait();
                 }
+
+                if (mode == "1")
+                {
+                    string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                    log.WriteFile(strFileName, strDate, name, UserName, msg);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        httpclienfordb.DB(name, UserName, msg);
+                    }
+                   ).Start();
+                }
             }
         }
 
@@ -609,8 +689,21 @@ namespace ChatClientCS.ViewModels
                 Observable.Timer(TimeSpan.FromMilliseconds(5000)).Subscribe(
                     t => LampController.LampOff()
                     );
-                
 
+                if (mode == "1")
+                {
+                    string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                    log.WriteFile(strFileName, strDate, name, UserName, msg);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        httpclienfordb.DB(name, UserName, msg);
+                    }
+                   ).Start();
+                }
 
             }
         }
@@ -638,6 +731,21 @@ namespace ChatClientCS.ViewModels
                 if (!(SelectedParticipant != null && sender.Name.Equals(SelectedParticipant.Name)))
                 {
                     ctxTaskFactory.StartNew(() => sender.HasSentNewMessage = true).Wait();
+                }
+
+                if (mode == "1")
+                {
+                    string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                    log.WriteFile(strFileName, strDate, name, UserName, "수신된이미지:" + imgPath);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        httpclienfordb.DB(name, UserName, "수신된이미지:" + imgPath);
+                    }
+                   ).Start();
                 }
             }
         }
@@ -670,6 +778,21 @@ namespace ChatClientCS.ViewModels
                 if (!(SelectedParticipant != null && sender.Name.Equals(SelectedParticipant.Name)))
                 {
                     ctxTaskFactory.StartNew(() => sender.HasSentNewMessage = true).Wait();
+                }
+
+                if (mode == "1")
+                {
+                    string strFileName = DateTime.Today.ToString("yyyy-MM-dd") + ".txt";
+                    string strDate = DateTime.Now.ToString("[HH:mm:ss]");
+                    log.WriteFile(strFileName, strDate, name, UserName, cm.Message);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        httpclienfordb.DB(name, UserName, cm.Message);
+                    }
+                   ).Start();
                 }
 
             }
@@ -760,6 +883,10 @@ namespace ChatClientCS.ViewModels
 
         public MainWindowViewModel(IChatService chatSvc, IDialogService diagSvc)
         {
+            consoleIni.ReadIni();
+
+            mode = consoleIni.mode;
+
             dialogService = diagSvc;
             chatService = chatSvc;
 

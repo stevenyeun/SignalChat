@@ -145,7 +145,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Enums\VideoType.cs" />
+    <Compile Include="DB\HTTPClientForDB.cs" />
     <Compile Include="Ini\Ini.cs" />
+    <Compile Include="DB\MyWebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Log\log.cs" />
     <Compile Include="QlightLib\LampController.cs" />
     <Compile Include="Services\ChatService.cs" />
     <Compile Include="Services\DialogService.cs" />

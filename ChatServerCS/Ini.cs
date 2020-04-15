@@ -61,10 +61,7 @@ namespace Ini
 
         public string server1 = "";
         public string server2 = "";
-        public string[] DBserver_Main = new string[255];
-        public string[] DBserver_Sub = new string[255];
         public string id = "";
-        public int num_sv = 0;
 
         /// <summary>
         /// »ý¼ºÀÚ
@@ -114,27 +111,9 @@ namespace Ini
         {
             string section = "common";
 
-            this.id = ini.IniReadValue(section, "id");
             this.server1 = ini.IniReadValue(section, "server1");
             this.server2 = ini.IniReadValue(section, "server2");
-
-            for(int i = 0; i<255; i++)
-            {
-                string strTemp;
-                strTemp = $"Main{i}";
-                this.DBserver_Main[i] = ini.IniReadValue("DBserver", strTemp);
-                strTemp = $"Sub{i}";
-                this.DBserver_Sub[i] = ini.IniReadValue("DBserver", strTemp);
-
-                if (this.DBserver_Main[i] == "")
-                {
-                    this.num_sv = i;
-                    break;
-                }
-            }
-            
-
-            
+            this.id = ini.IniReadValue(section, "id");
         }
 
     }
